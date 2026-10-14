@@ -1,0 +1,6 @@
+{
+  "name": "CineVibe — AI-Powered Movie Recommendation Platform",
+  "description": "Next-generation movie recommendation platform based on user preferences, collaborative filtering, TF-IDF content similarity, K-Means clustering, and evaluation metrics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
