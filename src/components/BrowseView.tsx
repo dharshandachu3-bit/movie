@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Search, Star, Bookmark, Filter, SlidersHorizontal, Check, Sparkles } from 'lucide-react';
 import { Movie, UserProfile } from '../types';
 import { GENRES } from '../data/moviesData';
+import { MoviePoster } from './MoviePoster';
 
 interface BrowseViewProps {
   movies: Movie[];
@@ -169,11 +170,11 @@ export const BrowseView: React.FC<BrowseViewProps> = ({
                 className="group relative rounded-xl overflow-hidden glass-card hover:border-violet-500/40 transition-all duration-300 flex flex-col cursor-pointer"
               >
                 <div className="relative aspect-[2/3] w-full overflow-hidden bg-slate-900">
-                  <img
+                  <MoviePoster
                     src={movie.poster}
                     alt={movie.title}
+                    fallbackTitle={movie.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    loading="lazy"
                   />
                   
                   <div className="absolute inset-0 bg-gradient-to-t from-[#090d1a] via-transparent to-black/25 opacity-70 group-hover:opacity-40 transition-opacity" />

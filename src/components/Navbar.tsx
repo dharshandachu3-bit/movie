@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Film, Search, Sparkles, User, Bookmark, ChevronDown, Check, Layers, BarChart3, Info } from 'lucide-react';
+import { Film, Search, Sparkles, User, Bookmark, ChevronDown, Check, Layers, BarChart3, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ActiveTab, UserProfile } from '../types';
 import { PRESET_PERSONAS } from '../data/clustersData';
 
@@ -11,6 +11,10 @@ interface NavbarProps {
   watchlistCount: number;
   onOpenSearch: () => void;
   onOpenProjectInfo: () => void;
+  canGoBack?: boolean;
+  canGoForward?: boolean;
+  onGoBack?: () => void;
+  onGoForward?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -21,29 +25,66 @@ export const Navbar: React.FC<NavbarProps> = ({
   watchlistCount,
   onOpenSearch,
   onOpenProjectInfo,
+  canGoBack = false,
+  canGoForward = false,
+  onGoBack,
+  onGoForward,
 }) => {
   const [showPersonaMenu, setShowPersonaMenu] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 bg-[#060813]/85 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        {/* Brand Logo */}
-        <div 
-          onClick={() => setActiveTab('home')}
-          className="flex items-center gap-2.5 cursor-pointer group select-none"
-        >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 via-fuchsia-600 to-pink-500 p-0.5 shadow-lg shadow-violet-500/25 group-hover:shadow-violet-500/40 transition-all duration-300">
-            <div className="w-full h-full bg-[#090d1a] rounded-[10px] flex items-center justify-center">
-              <Film className="w-5 h-5 text-violet-400 group-hover:text-pink-400 transition-colors" />
+        
+        {/* Left: Brand Logo & Navigation Controls */}
+        <div className="flex items-center gap-3">
+          <div 
+            onClick={() => setActiveTab('home')}
+            className="flex items-center gap-2.5 cursor-pointer group select-none"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-violet-600 via-fuchsia-600 to-pink-500 p-0.5 shadow-lg shadow-violet-500/25 group-hover:shadow-violet-500/40 transition-all duration-300">
+              <div className="w-full h-full bg-[#090d1a] rounded-[10px] flex items-center justify-center">
+                <Film className="w-5 h-5 text-violet-400 group-hover:text-pink-400 transition-colors" />
+              </div>
+            </div>
+            <div>
+              <span className="text-xl font-bold font-display tracking-tight bg-gradient-to-r from-white via-slate-100 to-violet-300 bg-clip-text text-transparent">
+                Cine<span className="text-violet-400">Vibe</span>
+              </span>
+              <span className="hidden sm:inline-block ml-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-violet-950/70 text-violet-300 border border-violet-800/40 rounded-full">
+                AI Recs
+              </span>
             </div>
           </div>
-          <div>
-            <span className="text-xl font-bold font-display tracking-tight bg-gradient-to-r from-white via-slate-100 to-violet-300 bg-clip-text text-transparent">
-              Cine<span className="text-violet-400">Vibe</span>
-            </span>
-            <span className="hidden sm:inline-block ml-2 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider bg-violet-950/70 text-violet-300 border border-violet-800/40 rounded-full">
-              AI Recs
-            </span>
+
+          {/* Back & Forward Navigation Buttons */}
+          <div className="flex items-center gap-0.5 bg-slate-900/90 border border-white/10 rounded-full p-1 shadow-sm">
+            <button
+              onClick={onGoBack}
+              disabled={!canGoBack}
+              className={`p-1.5 rounded-full transition-all ${
+                canGoBack
+                  ? 'text-slate-200 hover:text-white hover:bg-white/10 active:scale-95 cursor-pointer'
+                  : 'text-slate-600 cursor-not-allowed opacity-30'
+              }`}
+              title={canGoBack ? 'Go Back (Alt + ←)' : 'No previous page in history'}
+              aria-label="Go Back"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onGoForward}
+              disabled={!canGoForward}
+              className={`p-1.5 rounded-full transition-all ${
+                canGoForward
+                  ? 'text-slate-200 hover:text-white hover:bg-white/10 active:scale-95 cursor-pointer'
+                  : 'text-slate-600 cursor-not-allowed opacity-30'
+              }`}
+              title={canGoForward ? 'Go Forward (Alt + →)' : 'No forward page in history'}
+              aria-label="Go Forward"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
@@ -52,6 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {[
             { id: 'home', label: 'Home' },
             { id: 'recommendations', label: 'Discover' },
+            { id: 'chat', label: 'MovieChat ✦' },
             { id: 'clusters', label: 'Clusters' },
             { id: 'browse', label: 'Browse' },
             { id: 'analytics', label: 'Analytics' },

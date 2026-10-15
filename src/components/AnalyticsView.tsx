@@ -3,6 +3,7 @@ import { BarChart3, TrendingUp, Sliders, CheckCircle, ArrowUpRight, Zap, Target,
 import { SystemMetrics, Movie, UserProfile } from '../types';
 import { AlgorithmConfig } from '../services/recommenderEngine';
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { MoviePoster } from './MoviePoster';
 
 interface AnalyticsViewProps {
   metrics: SystemMetrics;
@@ -338,9 +339,10 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
                 className="group rounded-xl overflow-hidden glass-panel hover:border-violet-500/40 transition-all cursor-pointer flex flex-col"
               >
                 <div className="relative aspect-[2/3] w-full overflow-hidden bg-slate-900">
-                  <img
+                  <MoviePoster
                     src={item.poster}
                     alt={item.title}
+                    fallbackTitle={item.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-md text-[10px] font-mono font-bold text-violet-300 border border-violet-500/30">

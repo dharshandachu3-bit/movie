@@ -77,4 +77,4 @@ export interface SystemMetrics {
   topAccuracyMovies: { id: string; title: string; score: number; poster: string }[];
 }
 
-export type ActiveTab = 'home' | 'recommendations' | 'clusters' | 'browse' | 'analytics' | 'project-info';
+export type ActiveTab = 'home' | 'recommendations' | 'clusters' | 'browse' | 'analytics' | 'project-info' | 'chat';

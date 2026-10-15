@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Star, ChevronRight, Bookmark, ArrowUpRight, Film, Heart, Info, Play, Check } from 'lucide-react';
 import { Movie, UserProfile, ClusterInfo } from '../types';
 import { GENRES } from '../data/moviesData';
+import { MoviePoster } from './MoviePoster';
 
 interface DashboardViewProps {
   currentUser: UserProfile;
@@ -12,6 +13,7 @@ interface DashboardViewProps {
   onToggleWatchlist: (movieId: string) => void;
   onNavigateToClusters: () => void;
   onNavigateToBrowse: () => void;
+  onNavigateToChat?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -23,6 +25,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onToggleWatchlist,
   onNavigateToClusters,
   onNavigateToBrowse,
+  onNavigateToChat,
 }) => {
   const [selectedGenre, setSelectedGenre] = useState<string>('For You');
 
@@ -54,10 +57,23 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </p>
         </div>
 
-        {/* Real-time ML status indicator */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-950/40 border border-violet-500/20 text-xs text-violet-300">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          <span>Model Active: Hybrid SVD + TF-IDF</span>
+        {/* Action Controls */}
+        <div className="flex items-center gap-3">
+          {onNavigateToChat && (
+            <button
+              onClick={onNavigateToChat}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-violet-600 to-pink-600 hover:from-violet-500 hover:to-pink-500 text-white text-xs font-bold shadow-md shadow-violet-600/30 transition-all cursor-pointer"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Ask MovieChat AI</span>
+            </button>
+          )}
+
+          {/* Real-time ML status indicator */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-950/40 border border-violet-500/20 text-xs text-violet-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span>Hybrid SVD + TF-IDF</span>
+          </div>
         </div>
       </div>
 
@@ -125,11 +141,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   >
                     {/* Poster Image */}
                     <div className="relative aspect-[2/3] w-full overflow-hidden bg-slate-900">
-                      <img
+                      <MoviePoster
                         src={movie.poster}
                         alt={movie.title}
+                        fallbackTitle={movie.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
                       />
                       
                       {/* Gradient overlay */}
@@ -228,11 +244,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     onClick={() => onSelectMovie(movie)}
                   >
                     <div className="relative aspect-[2/3] w-full overflow-hidden bg-slate-900">
-                      <img
+                      <MoviePoster
                         src={movie.poster}
                         alt={movie.title}
+                        fallbackTitle={movie.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#090d1a] via-transparent to-black/30" />
                       

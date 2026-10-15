@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { X, Star, Bookmark, Sparkles, Film, Clock, Calendar, User, Check, Play, Share2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Star, Bookmark, Sparkles, Film, Clock, Calendar, User, Check, Play, Share2, ArrowLeft, ChevronLeft } from 'lucide-react';
 import { Movie, UserProfile } from '../types';
 import confetti from 'canvas-confetti';
+import { MoviePoster } from './MoviePoster';
 
 interface MovieDetailModalProps {
   movie: Movie | null;
@@ -28,6 +29,17 @@ export const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const isWatchlisted = currentUser.watchlist.includes(movie.id);
 
+  // Close modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   // Find similar movies based on genres
   const similarMovies = allMovies
     .filter(m => m.id !== movie.id && m.genres.some(g => movie.genres.includes(g)))
@@ -43,11 +55,14 @@ export const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200 cursor-pointer"
+      onClick={onClose}
+    >
       
       {/* Modal Container */}
       <div 
-        className="relative w-full max-w-4xl glass-panel-glow rounded-2xl overflow-hidden border border-violet-500/30 my-8 shadow-2xl bg-[#080c1b]"
+        className="relative w-full max-w-4xl glass-panel-glow rounded-2xl overflow-hidden border border-violet-500/30 my-8 shadow-2xl bg-[#080c1b] cursor-default"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Backdrop Banner */}
@@ -60,16 +75,27 @@ export const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
           <div className="absolute inset-0 bg-gradient-to-t from-[#080c1b] via-[#080c1b]/60 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#080c1b] via-transparent to-[#080c1b]" />
 
-          {/* Close button */}
+          {/* Prominent Back to Movies Button in Top Left */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-black/60 hover:bg-black/90 text-slate-300 hover:text-white backdrop-blur-md border border-white/10 transition-colors z-20"
+            className="absolute top-4 left-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/75 hover:bg-black/95 text-white text-xs font-bold backdrop-blur-md border border-white/20 hover:border-violet-400/60 shadow-xl transition-all z-20 cursor-pointer group"
+            title="Back to movies (Esc)"
+          >
+            <ArrowLeft className="w-4 h-4 text-violet-300 group-hover:-translate-x-1 transition-transform" />
+            <span>Back to Movies</span>
+          </button>
+
+          {/* Close X button in Top Right */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 rounded-full bg-black/70 hover:bg-black/95 text-slate-300 hover:text-white backdrop-blur-md border border-white/10 transition-colors z-20 cursor-pointer"
+            title="Close (Esc)"
           >
             <X className="w-5 h-5" />
           </button>
 
           {/* Match Score Badge */}
-          <div className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-600/90 backdrop-blur-md text-white text-xs font-bold border border-violet-400/30 shadow-lg">
+          <div className="absolute bottom-4 right-4 sm:top-4 sm:right-16 sm:bottom-auto inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-600/90 backdrop-blur-md text-white text-xs font-bold border border-violet-400/30 shadow-lg">
             <Sparkles className="w-3.5 h-3.5" />
             <span>{movie.matchScore || 95}% Match for You</span>
           </div>
@@ -82,9 +108,10 @@ export const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
             
             {/* Poster Card */}
             <div className="w-32 sm:w-44 flex-shrink-0 aspect-[2/3] rounded-xl overflow-hidden glass-card shadow-2xl border border-white/20 mx-auto sm:mx-0">
-              <img
+              <MoviePoster
                 src={movie.poster}
                 alt={movie.title}
+                fallbackTitle={movie.title}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -229,11 +256,14 @@ export const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
                     onClick={() => onSelectMovie(sim)}
                     className="glass-card rounded-lg p-2 hover:border-violet-500/40 transition-all cursor-pointer flex items-center gap-2"
                   >
-                    <img
-                      src={sim.poster}
-                      alt={sim.title}
-                      className="w-10 h-14 object-cover rounded flex-shrink-0"
-                    />
+                    <div className="w-10 h-14 rounded overflow-hidden flex-shrink-0 bg-slate-900">
+                      <MoviePoster
+                        src={sim.poster}
+                        alt={sim.title}
+                        fallbackTitle={sim.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
                     <div className="truncate">
                       <p className="text-xs font-bold text-white truncate">{sim.title}</p>
                       <p className="text-[10px] text-slate-400">{sim.genres[0]}</p>
@@ -244,6 +274,21 @@ export const MovieDetailModal: React.FC<MovieDetailModalProps> = ({
               </div>
             </div>
           )}
+
+          {/* Modal Bottom Footer with Back Button */}
+          <div className="pt-4 border-t border-white/10 flex items-center justify-between">
+            <button
+              onClick={onClose}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold border border-white/15 shadow-sm transition-all cursor-pointer group"
+            >
+              <ArrowLeft className="w-4 h-4 text-violet-300 group-hover:-translate-x-1 transition-transform" />
+              <span>Back to Movies</span>
+            </button>
+
+            <span className="text-[11px] text-slate-400">
+              Press <kbd className="px-1.5 py-0.5 rounded bg-black/40 border border-white/10 text-slate-300 font-mono text-[10px]">ESC</kbd> to return
+            </span>
+          </div>
 
         </div>
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Sparkles, Users, LayoutGrid, BarChart3, Settings, LogOut, Film, Award, X } from 'lucide-react';
+import { Home, Sparkles, Users, LayoutGrid, BarChart3, Settings, LogOut, Film, Award, X, Bot } from 'lucide-react';
 import { ActiveTab, UserProfile } from '../types';
 
 interface SidebarProps {
@@ -24,6 +24,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'recommendations', label: 'Recommendations', icon: Sparkles },
+    { id: 'chat', label: 'MovieChat AI', icon: Bot },
     { id: 'clusters', label: 'User Clusters', icon: Users },
     { id: 'browse', label: 'Browse Movies', icon: LayoutGrid },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },

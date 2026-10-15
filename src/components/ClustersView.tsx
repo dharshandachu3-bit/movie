@@ -3,6 +3,7 @@ import { Users, Sparkles, Filter, Info, Eye, Compass, Award } from 'lucide-react
 import { ClusterInfo, ClusterPoint, Movie, UserProfile } from '../types';
 import { CLUSTERS, TSNE_USER_POINTS } from '../data/clustersData';
 import { MOVIES } from '../data/moviesData';
+import { MoviePoster } from './MoviePoster';
 
 interface ClustersViewProps {
   currentUser: UserProfile;
@@ -355,9 +356,10 @@ export const ClustersView: React.FC<ClustersViewProps> = ({
               className="group rounded-xl overflow-hidden glass-card hover:border-violet-500/40 transition-all cursor-pointer"
             >
               <div className="relative aspect-[2/3] w-full overflow-hidden bg-slate-900">
-                <img
+                <MoviePoster
                   src={movie.poster}
                   alt={movie.title}
+                  fallbackTitle={movie.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute top-1.5 right-1.5 px-1 py-0.5 rounded bg-black/70 text-[10px] font-bold text-amber-300">

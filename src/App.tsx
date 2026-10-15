@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { HeroSection } from './components/HeroSection';
@@ -9,6 +9,7 @@ import { AnalyticsView } from './components/AnalyticsView';
 import { MovieDetailModal } from './components/MovieDetailModal';
 import { ProjectInfoModal } from './components/ProjectInfoModal';
 import { BottomBanner } from './components/BottomBanner';
+import { MovieChat } from './components/MovieChat';
 import { MOVIES } from './data/moviesData';
 import { DEFAULT_USER, CLUSTERS } from './data/clustersData';
 import { ActiveTab, Movie, UserProfile } from './types';
@@ -18,10 +19,15 @@ import {
   DEFAULT_ALGO_CONFIG,
   AlgorithmConfig,
 } from './services/recommenderEngine';
-import { Menu, Sparkles, Film, ArrowRight } from 'lucide-react';
+import { Menu, Sparkles, Film, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
+
+interface NavigationHistoryEntry {
+  tab: ActiveTab;
+  movieId?: string | null;
+}
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('home');
+  const [activeTab, setActiveTabState] = useState<ActiveTab>('home');
   const [currentUser, setCurrentUser] = useState<UserProfile>(DEFAULT_USER);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [isProjectInfoOpen, setIsProjectInfoOpen] = useState(false);
@@ -35,6 +41,88 @@ export default function App() {
       setToastMessage(null);
     }, 2800);
   }, []);
+
+  // Navigation History Stack
+  const [historyStack, setHistoryStack] = useState<NavigationHistoryEntry[]>([
+    { tab: 'home', movieId: null },
+  ]);
+  const [historyPointer, setHistoryPointer] = useState<number>(0);
+
+  // Navigate function that records history
+  const navigateTo = useCallback((tab: ActiveTab, movieId: string | null = null) => {
+    setActiveTabState(tab);
+    if (movieId) {
+      const movie = MOVIES.find(m => m.id === movieId) || null;
+      setSelectedMovie(movie);
+    } else {
+      setSelectedMovie(null);
+    }
+
+    setHistoryStack(prev => {
+      const truncated = prev.slice(0, historyPointer + 1);
+      const currentEntry = truncated[truncated.length - 1];
+      if (currentEntry && currentEntry.tab === tab && currentEntry.movieId === movieId) {
+        return truncated;
+      }
+      const next = [...truncated, { tab, movieId }];
+      setHistoryPointer(next.length - 1);
+      return next;
+    });
+  }, [historyPointer]);
+
+  // Back navigation
+  const handleGoBack = useCallback(() => {
+    // If a movie details modal is open, back closes it
+    if (selectedMovie) {
+      setSelectedMovie(null);
+      return;
+    }
+
+    if (historyPointer > 0) {
+      const targetIdx = historyPointer - 1;
+      const targetEntry = historyStack[targetIdx];
+      setHistoryPointer(targetIdx);
+      setActiveTabState(targetEntry.tab);
+      if (targetEntry.movieId) {
+        setSelectedMovie(MOVIES.find(m => m.id === targetEntry.movieId) || null);
+      } else {
+        setSelectedMovie(null);
+      }
+    }
+  }, [selectedMovie, historyPointer, historyStack]);
+
+  // Forward navigation
+  const handleGoForward = useCallback(() => {
+    if (historyPointer < historyStack.length - 1) {
+      const targetIdx = historyPointer + 1;
+      const targetEntry = historyStack[targetIdx];
+      setHistoryPointer(targetIdx);
+      setActiveTabState(targetEntry.tab);
+      if (targetEntry.movieId) {
+        setSelectedMovie(MOVIES.find(m => m.id === targetEntry.movieId) || null);
+      } else {
+        setSelectedMovie(null);
+      }
+    }
+  }, [historyPointer, historyStack]);
+
+  // Keyboard shortcuts: Alt + ArrowLeft / Alt + ArrowRight
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handleGoBack();
+      } else if (e.altKey && e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleGoForward();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleGoBack, handleGoForward]);
+
+  const canGoBack = Boolean(selectedMovie) || historyPointer > 0;
+  const canGoForward = historyPointer < historyStack.length - 1;
 
   // Run dynamic recommendation engine whenever user profile or weights change
   const { recommended, clusterPicks, userCluster } = useMemo(() => {
@@ -98,23 +186,55 @@ export default function App() {
       {/* Main Top Navigation */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={(tab) => navigateTo(tab)}
         currentUser={currentUser}
         setCurrentUser={setCurrentUser}
         watchlistCount={currentUser.watchlist.length}
-        onOpenSearch={() => setActiveTab('browse')}
+        onOpenSearch={() => navigateTo('browse')}
         onOpenProjectInfo={() => setIsProjectInfoOpen(true)}
+        canGoBack={canGoBack}
+        canGoForward={canGoForward}
+        onGoBack={handleGoBack}
+        onGoForward={handleGoForward}
       />
 
-      {/* Mobile Top Bar with Sidebar toggle */}
-      <div className="lg:hidden flex items-center justify-between px-4 py-2.5 bg-[#090d1f] border-b border-white/5 text-xs">
-        <button
-          onClick={() => setIsMobileMenuOpen(true)}
-          className="flex items-center gap-2 p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5"
-        >
-          <Menu className="w-4 h-4" />
-          <span>Menu</span>
-        </button>
+      {/* Mobile Top Bar with Back/Forward & Sidebar toggle */}
+      <div className="lg:hidden flex items-center justify-between px-4 py-2 bg-[#090d1f] border-b border-white/5 text-xs">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="flex items-center gap-1.5 p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-white/5"
+          >
+            <Menu className="w-4 h-4" />
+            <span>Menu</span>
+          </button>
+
+          {/* Mobile Back & Forward */}
+          <div className="flex items-center gap-0.5 bg-slate-900 border border-white/10 rounded-full p-0.5">
+            <button
+              onClick={handleGoBack}
+              disabled={!canGoBack}
+              className={`p-1 rounded-full ${
+                canGoBack ? 'text-white hover:bg-white/10' : 'text-slate-600 opacity-30 cursor-not-allowed'
+              }`}
+              title="Go Back"
+              aria-label="Go Back"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={handleGoForward}
+              disabled={!canGoForward}
+              className={`p-1 rounded-full ${
+                canGoForward ? 'text-white hover:bg-white/10' : 'text-slate-600 opacity-30 cursor-not-allowed'
+              }`}
+              title="Go Forward"
+              aria-label="Go Forward"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
 
         <span className="text-[11px] text-violet-400 font-mono font-medium">
           Cluster: {userCluster.name}
@@ -127,7 +247,7 @@ export default function App() {
         {/* Left Sidebar */}
         <Sidebar
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={(tab) => navigateTo(tab)}
           currentUser={currentUser}
           isOpenMobile={isMobileMenuOpen}
           onCloseMobile={() => setIsMobileMenuOpen(false)}
@@ -143,9 +263,9 @@ export default function App() {
             <div className="space-y-10">
               <HeroSection
                 featuredMovies={MOVIES}
-                onGetStarted={() => setActiveTab('recommendations')}
-                onExploreMovies={() => setActiveTab('browse')}
-                onSelectMovie={(movie) => setSelectedMovie(movie)}
+                onGetStarted={() => navigateTo('recommendations')}
+                onExploreMovies={() => navigateTo('browse')}
+                onSelectMovie={(movie) => navigateTo(activeTab, movie.id)}
               />
 
               {/* Quick Preview of Recommendations on Home */}
@@ -154,13 +274,14 @@ export default function App() {
                 recommendedMovies={recommended}
                 clusterPicks={clusterPicks}
                 userCluster={userCluster}
-                onSelectMovie={(movie) => setSelectedMovie(movie)}
+                onSelectMovie={(movie) => navigateTo(activeTab, movie.id)}
                 onToggleWatchlist={handleToggleWatchlist}
-                onNavigateToClusters={() => setActiveTab('clusters')}
-                onNavigateToBrowse={() => setActiveTab('browse')}
+                onNavigateToClusters={() => navigateTo('clusters')}
+                onNavigateToBrowse={() => navigateTo('browse')}
+                onNavigateToChat={() => navigateTo('chat')}
               />
 
-              <BottomBanner onExplore={() => setActiveTab('clusters')} />
+              <BottomBanner onExplore={() => navigateTo('clusters')} />
             </div>
           )}
 
@@ -172,13 +293,25 @@ export default function App() {
                 recommendedMovies={recommended}
                 clusterPicks={clusterPicks}
                 userCluster={userCluster}
-                onSelectMovie={(movie) => setSelectedMovie(movie)}
+                onSelectMovie={(movie) => navigateTo(activeTab, movie.id)}
                 onToggleWatchlist={handleToggleWatchlist}
-                onNavigateToClusters={() => setActiveTab('clusters')}
-                onNavigateToBrowse={() => setActiveTab('browse')}
+                onNavigateToClusters={() => navigateTo('clusters')}
+                onNavigateToBrowse={() => navigateTo('browse')}
+                onNavigateToChat={() => navigateTo('chat')}
               />
 
-              <BottomBanner onExplore={() => setActiveTab('clusters')} />
+              <BottomBanner onExplore={() => navigateTo('clusters')} />
+            </div>
+          )}
+
+          {/* View: MovieChat Natural Language AI Recommender */}
+          {activeTab === 'chat' && (
+            <div className="space-y-8">
+              <MovieChat
+                currentUser={currentUser}
+                onSelectMovie={(movie) => navigateTo(activeTab, movie.id)}
+                onToggleWatchlist={handleToggleWatchlist}
+              />
             </div>
           )}
 
@@ -187,10 +320,10 @@ export default function App() {
             <div className="space-y-8">
               <ClustersView
                 currentUser={currentUser}
-                onSelectMovie={(movie) => setSelectedMovie(movie)}
+                onSelectMovie={(movie) => navigateTo(activeTab, movie.id)}
               />
 
-              <BottomBanner onExplore={() => setActiveTab('analytics')} />
+              <BottomBanner onExplore={() => navigateTo('analytics')} />
             </div>
           )}
 
@@ -200,7 +333,7 @@ export default function App() {
               <BrowseView
                 movies={MOVIES}
                 currentUser={currentUser}
-                onSelectMovie={(movie) => setSelectedMovie(movie)}
+                onSelectMovie={(movie) => navigateTo(activeTab, movie.id)}
                 onToggleWatchlist={handleToggleWatchlist}
               />
             </div>
@@ -214,11 +347,11 @@ export default function App() {
                 currentUser={currentUser}
                 algoConfig={algoConfig}
                 onUpdateAlgoConfig={setAlgoConfig}
-                onSelectMovie={(movie) => setSelectedMovie(movie)}
+                onSelectMovie={(movie) => navigateTo(activeTab, movie.id)}
                 moviesList={MOVIES}
               />
 
-              <BottomBanner onExplore={() => setActiveTab('browse')} />
+              <BottomBanner onExplore={() => navigateTo('browse')} />
             </div>
           )}
 
@@ -255,7 +388,7 @@ export default function App() {
         onRateMovie={handleRateMovie}
         onToggleWatchlist={handleToggleWatchlist}
         allMovies={MOVIES}
-        onSelectMovie={(movie) => setSelectedMovie(movie)}
+        onSelectMovie={(movie) => navigateTo(activeTab, movie.id)}
       />
 
       {/* Academic Project Info Modal (CO3 | L3) */}
